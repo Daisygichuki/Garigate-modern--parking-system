@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Check Out · GariGate{% endblock %}
+{% block content %}
+
+<h2>Check out a vehicle</h2>
+<p>Enter the plate number to calculate time parked and the amount due.</p>
+
+<div class="card">
+  <form method="POST" action="{{ url_for('checkout') }}">
+    <label for="plate_number">License plate</label>
+    <input type="text" id="plate_number" name="plate_number" placeholder="e.g. KDA 456J" required autofocus>
+
+    <button type="submit">Calculate Bill</button>
+  </form>
+</div>
+
+{% endblock %}

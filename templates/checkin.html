@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Check In · GariGate{% endblock %}
+{% block content %}
+
+<h2>Check in a vehicle</h2>
+<p>The system will assign the next free bay and start the clock automatically.</p>
+
+<div class="card">
+  <form method="POST" action="{{ url_for('checkin') }}">
+    <label for="plate_number">License plate</label>
+    <input type="text" id="plate_number" name="plate_number" placeholder="e.g. KDA 456J" required autofocus>
+
+    <label for="driver_name">Driver name (optional)</label>
+    <input type="text" id="driver_name" name="driver_name" placeholder="e.g. Achieng Otieno">
+
+    <button type="submit">Check In</button>
+  </form>
+</div>
+
+{% endblock %}

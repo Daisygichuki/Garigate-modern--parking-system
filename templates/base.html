@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}GariGate{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>GariGate</h1>
+        <div class="tag">Automated parking · Nairobi</div>
+      </div>
+      <nav>
+        <a href="{{ url_for('dashboard') }}">Lot Status</a>
+        <a href="{{ url_for('checkin') }}">Check In</a>
+        <a href="{{ url_for('checkout') }}">Check Out</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    
+  </div>
+
+</body>
+</html>

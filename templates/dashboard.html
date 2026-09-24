@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Lot Status · GariGate{% endblock %}
+{% block content %}
+
+<div class="gate">
+  <div class="gate-post"></div>
+  <div class="gate-arm"></div>
+  <div class="gate-status">Barrier: <span class="state">closed</span></div>
+</div>
+
+<div class="summary">
+  <div class="stat"><span class="num">{{ total }}</span><span class="label">total bays</span></div>
+  <div class="stat"><span class="num">{{ available }}</span><span class="label">available now</span></div>
+  <div class="stat"><span class="num">{{ occupied }}</span><span class="label">occupied</span></div>
+</div>
+
+{% set zones = {} %}
+{% for spot in spots %}
+  {% if spot.zone not in zones %}{% set _ = zones.update({spot.zone: []}) %}{% endif %}
+  {% set _ = zones[spot.zone].append(spot) %}
+{% endfor %}
+
+<h2>Live bay map</h2>
+{% for zone_name, bays in zones.items() %}
+  <div class="zone">
+    <h3>Zone {{ zone_name }}</h3>
+    <div class="bay-row">
+      {% for bay in bays %}
+        <div class="bay {{ bay.status }}">
+          <div class="id">{{ bay.spot_id }}</div>
+          <div class="state">{{ bay.status }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endfor %}
+
+{% if history %}
+<div class="history">
+  <h2>Recent activity</h2>
+  <ul>
+    {% for h in history %}
+      <li>
+        <span>{{ h.plate_number }} &middot; bay {{ h.spot_id }}</span>
+        <span>{% if h.payment_status == 'paid' %}KSh {{ '%.2f'|format(h.amount_due) }} paid{% else %}awaiting payment{% endif %}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% endblock %}

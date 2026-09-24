@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ticket · GariGate{% endblock %}
+{% block content %}
+
+{% if paid %}
+
+  <div class="gate open">
+    <div class="gate-post"></div>
+    <div class="gate-arm"></div>
+    <div class="gate-status">Barrier: <span class="state">open — drive through</span></div>
+  </div>
+
+  <h2>Payment confirmed</h2>
+  <div class="ticket">
+    <div class="ticket-row"><span>Bay released</span><span>{{ spot_id }}</span></div>
+    <div class="ticket-row"><span>Amount paid</span><span class="amount">KSh {{ '%.2f'|format(amount) }}</span></div>
+  </div>
+  <p><a class="btn" href="{{ url_for('dashboard') }}">Back to lot status</a></p>
+
+{% else %}
+
+  <h2>Your ticket</h2>
+  <div class="ticket">
+    <div class="ticket-row"><span>Plate</span><span>{{ session.plate_number }}</span></div>
+    <div class="ticket-row"><span>Bay</span><span>{{ session.spot_id }}</span></div>
+    <div class="ticket-row"><span>Checked in</span><span>{{ session.check_in_time.replace('T', ' ') }}</span></div>
+    <div class="ticket-row"><span>Time parked</span><span>{{ duration_text }}</span></div>
+    <div class="ticket-row"><span>Amount due</span><span class="amount">KSh {{ '%.2f'|format(amount) }}</span></div>
+  </div>
+
+  <p>
+    <a class="btn btn-pay"
+       href="{{ url_for('pay', session_id=session.session_id, spot_id=session.spot_id, amount=amount) }}">
+       Pay &amp; Open Barrier
+    </a>
+  </p>
+
+{% endif %}
+
+{% endblock %}
