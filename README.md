@@ -1,7 +1,6 @@
 # GariGate — Automated Parking System
 
-A modern, web-based parking management system built for the MMU
-"Actual System Development" assignment. "Gari" is Swahili for car.
+A modern, web-based parking management system. "Gari" is Swahili for car.
 
 ## Use cases implemented
 
@@ -56,7 +55,7 @@ python app.py
 
 Then open **http://127.0.0.1:5000** in your browser.
 
-## How to demo it for marking
+
 
 1. Open the home page — show the empty lot (all bays "available").
 2. Go to **Check In**, enter a plate number (e.g. `KDA 456J`) — a bay
