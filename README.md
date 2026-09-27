@@ -1,7 +1,6 @@
 # GariGate — Automated Parking System
 
-A modern, web-based parking management system built for the MMU
-"Actual System Development" assignment. "Gari" is Swahili for car.
+A modern, web-based parking management system . "Gari" is Swahili for car.
 
 ## Use cases implemented
 
