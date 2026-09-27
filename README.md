@@ -66,7 +66,7 @@ python app.py
 
 Then open **http://127.0.0.1:5000** in your browser.
 
-## How to demo it for marking
+## How to demo it 
 
 1. Open the home page — show the empty lot (all bays "available").
 2. Go to **Check In**, enter a plate number (e.g. `KDA 456J`) — a bay
