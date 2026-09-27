@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Manage Rates · GariGate{% endblock %}
+{% block content %}
+
+<h2>Manage parking rates</h2>
+<p>Change any threshold or price below and save — takes effect immediately for the next vehicle checked out, no restart needed.</p>
+
+<div class="card" style="max-width:520px;">
+  <form method="POST" action="{{ url_for('admin_rates') }}">
+
+    <label>Tier 1 — up to how many minutes?</label>
+    <input type="text" name="tier1_upper" value="{{ tiers[0][0]|int }}">
+    <label>Price for Tier 1 (KSh)</label>
+    <input type="text" name="tier1_price" value="{{ tiers[0][1]|float }}">
+
+    <label style="margin-top:20px;">Tier 2 — up to how many minutes?</label>
+    <input type="text" name="tier2_upper" value="{{ tiers[1][0]|int }}">
+    <label>Price for Tier 2 (KSh)</label>
+    <input type="text" name="tier2_price" value="{{ tiers[1][1]|float }}">
+
+    <label style="margin-top:20px;">Tier 3 — up to how many minutes?</label>
+    <input type="text" name="tier3_upper" value="{{ tiers[2][0]|int }}">
+    <label>Price for Tier 3 (KSh)</label>
+    <input type="text" name="tier3_price" value="{{ tiers[2][1]|float }}">
+
+    <label style="margin-top:20px;">Tier 4 — up to how many minutes?</label>
+    <input type="text" name="tier4_upper" value="{{ tiers[3][0]|int }}">
+    <label>Price for Tier 4 (KSh)</label>
+    <input type="text" name="tier4_price" value="{{ tiers[3][1]|float }}">
+
+    <label style="margin-top:20px;">Tier 5 — over the Tier 4 limit (no upper bound)</label>
+    <label>Price for Tier 5 (KSh)</label>
+    <input type="text" name="tier5_price" value="{{ tiers[4][1]|float }}">
+
+    <button type="submit">Save Rates</button>
+  </form>
+</div>
+
+{% endblock %}

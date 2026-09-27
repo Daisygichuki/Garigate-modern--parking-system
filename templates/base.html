@@ -18,6 +18,8 @@
         <a href="{{ url_for('dashboard') }}">Lot Status</a>
         <a href="{{ url_for('checkin') }}">Check In</a>
         <a href="{{ url_for('checkout') }}">Check Out</a>
+        <a href="{{ url_for('reports') }}">Reports</a>
+        <a href="{{ url_for('admin_rates') }}">Manage Rates</a>
       </nav>
     </div>
   </div>
@@ -32,8 +34,6 @@
     {% endwith %}
 
     {% block content %}{% endblock %}
-
-    
   </div>
 
 </body>

@@ -93,7 +93,7 @@ operations:
 
 ## 3. Why these choices fit the brief
 
-The project asks for identified **modules, algorithms, and
+The assignment asks for identified **modules, algorithms, and
 databases**. Splitting the project into `database.py` (data),
 `fee_calculator.py` (business logic/algorithm), and `app.py` (routes)
 keeps each concern isolated, so the algorithm above can be pointed to

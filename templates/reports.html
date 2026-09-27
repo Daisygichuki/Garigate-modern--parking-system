@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Reports · GariGate{% endblock %}
+{% block content %}
+
+<h2>Collections report</h2>
+<p>An auditable record of every shilling collected, for reconciliation and VAT.</p>
+
+<div class="card" style="max-width:100%;">
+  <form method="GET" action="{{ url_for('reports') }}" style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end;">
+    <div>
+      <label for="start">From</label>
+      <input type="text" id="start" name="start" placeholder="YYYY-MM-DD" value="{{ start }}">
+    </div>
+    <div>
+      <label for="end">To</label>
+      <input type="text" id="end" name="end" placeholder="YYYY-MM-DD" value="{{ end }}">
+    </div>
+    <div>
+      <label for="method">Payment method</label>
+      <select id="method" name="method">
+        <option value="" {% if not method %}selected{% endif %}>All</option>
+        {% for m in payment_methods %}
+          <option value="{{ m }}" {% if method == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit">Filter</button>
+  </form>
+</div>
+
+<div class="summary">
+  <div><span class="num">KSh {{ '%.2f'|format(total_collected) }}</span><span class="label">total collected</span></div>
+  <div><span class="num">{{ transaction_count }}</span><span class="label">transactions</span></div>
+</div>
+
+{% if breakdown %}
+<h3>By payment method</h3>
+<ul style="list-style:none; padding:0;">
+  {% for method_name, amount in breakdown.items() %}
+    <li style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px dashed var(--line);">
+      <span>{{ method_name }}</span><span>KSh {{ '%.2f'|format(amount) }}</span>
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h3 style="margin-top:32px;">Transactions</h3>
+{% if sessions %}
+<div style="overflow-x:auto;">
+<table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+  <thead>
+    <tr style="text-align:left; border-bottom:2px solid var(--line);">
+      <th style="padding:8px 6px;">Plate</th>
+      <th style="padding:8px 6px;">Bay</th>
+      <th style="padding:8px 6px;">Checked out</th>
+      <th style="padding:8px 6px;">Method</th>
+      <th style="padding:8px 6px; text-align:right;">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sessions %}
+      <tr style="border-bottom:1px solid var(--line);">
+        <td style="padding:8px 6px;">{{ s.plate_number }}</td>
+        <td style="padding:8px 6px;">{{ s.spot_id }}</td>
+        <td style="padding:8px 6px;">{{ s.check_out_time.replace('T', ' ') if s.check_out_time else '' }}</td>
+        <td style="padding:8px 6px;">{{ s.payment_method or '—' }}</td>
+        <td style="padding:8px 6px; text-align:right;">KSh {{ '%.2f'|format(s.amount_due or 0) }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No transactions match this filter yet.</p>
+{% endif %}
+
+{% endblock %}

@@ -6,26 +6,13 @@ inside app.py) is good practice: it is the single "source of truth"
 for how much a driver owes, it's easy to unit-test on its own, and a
 lecturer marking algorithms/logic can find it in one glance.
 
-Fee tiers, exactly as given in the brief:
-    0  - 30 minutes   -> FREE
-    30 min - 2 hours   -> KSh 50
-    2 hrs  - 4 hours   -> KSh 100
-    4 hrs  - 6 hours   -> KSh 300
-    over 6 hours        -> KSh 500
+The fee TIERS themselves now live in the database (see database.py's
+fee_tiers table), so management can change rates without a software
+change. This file only holds the ALGORITHM that applies whatever
+tiers it's given - it no longer hardcodes the prices itself.
 """
 
 from datetime import datetime
-
-# (upper_limit_in_minutes, price) - checked in order, first match wins.
-# Using a table like this (instead of a long if/elif chain) makes it
-# trivial to change the pricing later without touching any logic.
-FEE_TIERS = [
-    (30,   0),
-    (120,  50),
-    (240,  100),
-    (360,  300),
-    (float("inf"), 500),
-]
 
 
 def calculate_duration_minutes(check_in_iso, check_out_iso=None):
@@ -40,12 +27,20 @@ def calculate_duration_minutes(check_in_iso, check_out_iso=None):
     return delta.total_seconds() / 60
 
 
-def calculate_fee(duration_minutes):
-    """Looks up the correct tier for a given duration and returns the price."""
-    for upper_limit, price in FEE_TIERS:
-        if duration_minutes <= upper_limit:
+def calculate_fee(duration_minutes, tiers):
+    """
+    Looks up the correct tier for a given duration and returns the price.
+
+    tiers: a list of (upper_minutes, price) tuples, in ascending order,
+    as returned by database.get_fee_tiers(). The final tier's
+    upper_minutes is None, meaning "everything above the previous tier".
+    """
+    for upper_minutes, price in tiers:
+        if upper_minutes is None or duration_minutes <= upper_minutes:
             return price
-    return FEE_TIERS[-1][1]  # safety net, should never actually be reached
+    # Should never be reached if the tiers list ends with a None tier,
+    # but kept as a safety net.
+    return tiers[-1][1]
 
 
 def format_duration(duration_minutes):

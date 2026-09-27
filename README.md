@@ -1,6 +1,7 @@
 # GariGate — Automated Parking System
 
-A modern, web-based parking management system. "Gari" is Swahili for car.
+A modern, web-based parking management system built for the MMU
+"Actual System Development" assignment. "Gari" is Swahili for car.
 
 ## Use cases implemented
 
@@ -9,13 +10,24 @@ A modern, web-based parking management system. "Gari" is Swahili for car.
 2. **Record a vehicle on arrival** — `/checkin` assigns the next free
    bay and timestamps the arrival.
 3. **Calculate time and amount on exit** — `/checkout` looks up the
-   vehicle, works out how long it was parked, and applies the tiered
-   fee table from the brief.
-4. **Barrier opens on payment** — `/pay/<id>` is the only route that
-   marks a ticket as paid, frees the bay, and animates the barrier
-   open.
+   vehicle, works out how long it was parked, and applies the current
+   fee tiers (see below).
+4. **Collect payment and open barrier only on confirmation** — the
+   checkout ticket asks for a payment method (M-Pesa, Card, or Cash);
+   `/pay` is the only route that marks a ticket as paid, frees the
+   bay, and animates the barrier open.
+5. **Management can change rates without a software change** —
+   `/admin/rates` reads and writes the fee tiers directly in the
+   database. No code edit or restart is needed for a new rate to
+   apply to the next vehicle checked out.
+6. **Auditable record of every shilling collected** — `/reports`
+   lists every paid transaction with plate, bay, amount and payment
+   method, filterable by date range and payment method, with running
+   totals for reconciliation and VAT purposes.
 
 ## Fee structure
+
+The default rates, editable at any time via `/admin/rates`:
 
 | Duration            | Fee        |
 |----------------------|-----------|
@@ -55,7 +67,7 @@ python app.py
 
 Then open **http://127.0.0.1:5000** in your browser.
 
-
+## How to demo it for marking
 
 1. Open the home page — show the empty lot (all bays "available").
 2. Go to **Check In**, enter a plate number (e.g. `KDA 456J`) — a bay

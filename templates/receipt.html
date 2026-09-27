@@ -13,6 +13,7 @@
   <h2>Payment confirmed</h2>
   <div class="ticket">
     <div class="ticket-row"><span>Bay released</span><span>{{ spot_id }}</span></div>
+    <div class="ticket-row"><span>Paid via</span><span>{{ payment_method }}</span></div>
     <div class="ticket-row"><span>Amount paid</span><span class="amount">KSh {{ '%.2f'|format(amount) }}</span></div>
   </div>
   <p><a class="btn" href="{{ url_for('dashboard') }}">Back to lot status</a></p>
@@ -28,12 +29,22 @@
     <div class="ticket-row"><span>Amount due</span><span class="amount">KSh {{ '%.2f'|format(amount) }}</span></div>
   </div>
 
-  <p>
-    <a class="btn btn-pay"
-       href="{{ url_for('pay', session_id=session.session_id, spot_id=session.spot_id, amount=amount) }}">
-       Pay &amp; Open Barrier
-    </a>
-  </p>
+  <div class="card">
+    <form method="POST" action="{{ url_for('pay') }}">
+      <input type="hidden" name="session_id" value="{{ session.session_id }}">
+      <input type="hidden" name="spot_id" value="{{ session.spot_id }}">
+      <input type="hidden" name="amount" value="{{ amount }}">
+
+      <label for="payment_method">Payment method</label>
+      <select name="payment_method" id="payment_method">
+        {% for m in payment_methods %}
+          <option value="{{ m }}">{{ m }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="btn-pay">Pay &amp; Open Barrier</button>
+    </form>
+  </div>
 
 {% endif %}
 

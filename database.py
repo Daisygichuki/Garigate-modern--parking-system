@@ -25,6 +25,19 @@ ZONE_LAYOUT = {
     "C": 4,   # C1, C2, C3, C4
 }
 
+# The starting fee tiers, used ONLY to seed the fee_tiers table the very
+# first time the app runs. After that, management edits rates through
+# the /admin/rates page - never by touching this code again.
+# Each tuple is (upper_minutes, price). The final tier's upper_minutes
+# is None, meaning "everything above the previous tier".
+DEFAULT_FEE_TIERS = [
+    (30, 0),
+    (120, 50),
+    (240, 100),
+    (360, 300),
+    (None, 500),
+]
+
 
 def get_connection():
     """
@@ -40,10 +53,9 @@ def get_connection():
 
 def init_db():
     """
-    Creates the tables if they do not already exist, and fills the
-    'spots' table with empty bays the first time the app runs.
-    This is safe to call every time the app starts - it won't wipe
-    existing data because of "IF NOT EXISTS".
+    Creates the tables if they do not already exist, and seeds default
+    data the first time the app runs. Safe to call every time the app
+    starts - "IF NOT EXISTS" means it never wipes existing data.
     """
     conn = get_connection()
     cur = conn.cursor()
@@ -57,9 +69,9 @@ def init_db():
         )
     """)
 
-    # One row PER VISIT. A finished visit stays in the table forever
-    # as a receipt/history record - this doubles as our "database"
-    # of past transactions, which examiners like to see.
+    # One row PER VISIT. A finished, paid visit stays in the table
+    # forever as a receipt/history record - this is what makes the
+    # "auditable record of every shilling collected" objective possible.
     cur.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             session_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,7 +81,20 @@ def init_db():
             check_in_time TEXT NOT NULL,
             check_out_time TEXT,
             amount_due REAL,
-            payment_status TEXT DEFAULT 'unpaid'
+            payment_status TEXT DEFAULT 'unpaid',
+            payment_method TEXT
+        )
+    """)
+
+    # The pricing rulebook, as DATA instead of code. This is what lets
+    # management change rates without a software change: editing a row
+    # here needs no code edit and no restart.
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS fee_tiers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sort_order INTEGER NOT NULL,
+            upper_minutes REAL,
+            price REAL NOT NULL
         )
     """)
     conn.commit()
@@ -84,6 +109,16 @@ def init_db():
                     "INSERT INTO spots (spot_id, zone, status) VALUES (?, ?, 'available')",
                     (spot_id, zone)
                 )
+        conn.commit()
+
+    # Only seed fee_tiers if it is empty (first run ever)
+    cur.execute("SELECT COUNT(*) FROM fee_tiers")
+    if cur.fetchone()[0] == 0:
+        for order, (upper_minutes, price) in enumerate(DEFAULT_FEE_TIERS):
+            cur.execute(
+                "INSERT INTO fee_tiers (sort_order, upper_minutes, price) VALUES (?, ?, ?)",
+                (order, upper_minutes, price)
+            )
         conn.commit()
 
     conn.close()
@@ -154,15 +189,17 @@ def close_session(session_id, amount_due):
     conn.close()
 
 
-def pay_session(session_id, spot_id):
+def pay_session(session_id, spot_id, payment_method):
     """
-    Confirms payment, frees the physical bay again, and this is the
-    exact moment the barrier is allowed to open (see app.py /pay route).
+    Confirms payment, records HOW it was paid, frees the physical bay
+    again, and this is the exact moment the barrier is allowed to open
+    (see app.py /pay route).
     """
     conn = get_connection()
     conn.execute(
-        "UPDATE sessions SET payment_status = 'paid' WHERE session_id = ?",
-        (session_id,)
+        """UPDATE sessions SET payment_status = 'paid', payment_method = ?
+           WHERE session_id = ?""",
+        (payment_method, session_id)
     )
     conn.execute(
         "UPDATE spots SET status = 'available' WHERE spot_id = ?",
@@ -180,5 +217,73 @@ def get_recent_history(limit=8):
            ORDER BY session_id DESC LIMIT ?""",
         (limit,)
     ).fetchall()
+    conn.close()
+    return rows
+
+
+# ---------------------------------------------------------------------
+# Fee tiers - lets management change rates without a software change
+# ---------------------------------------------------------------------
+
+def get_fee_tiers():
+    """
+    Returns the current pricing rules as a list of (upper_minutes, price)
+    tuples, ordered cheapest/shortest first. upper_minutes is None for
+    the final, uncapped tier.
+    """
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT upper_minutes, price FROM fee_tiers ORDER BY sort_order"
+    ).fetchall()
+    conn.close()
+    return [(row["upper_minutes"], row["price"]) for row in rows]
+
+
+def update_fee_tiers(tiers):
+    """
+    Replaces the whole pricing table with a new set of tiers.
+    tiers: a list of (upper_minutes, price) tuples, in order.
+    This is a "delete everything, insert the new set" approach -
+    simple and safe because there are only ever 5 tiers.
+    """
+    conn = get_connection()
+    conn.execute("DELETE FROM fee_tiers")
+    for order, (upper_minutes, price) in enumerate(tiers):
+        conn.execute(
+            "INSERT INTO fee_tiers (sort_order, upper_minutes, price) VALUES (?, ?, ?)",
+            (order, upper_minutes, price)
+        )
+    conn.commit()
+    conn.close()
+
+
+# ---------------------------------------------------------------------
+# Reporting - the auditable record of every shilling collected
+# ---------------------------------------------------------------------
+
+def get_paid_sessions(start_date=None, end_date=None, payment_method=None):
+    """
+    Returns completed, PAID sessions, optionally filtered by a date
+    range (inclusive, 'YYYY-MM-DD' strings compared against the date
+    part of check_out_time) and/or a specific payment method.
+    Used by the /reports page for reconciliation.
+    """
+    conn = get_connection()
+    query = "SELECT * FROM sessions WHERE payment_status = 'paid'"
+    params = []
+
+    if start_date:
+        query += " AND date(check_out_time) >= date(?)"
+        params.append(start_date)
+    if end_date:
+        query += " AND date(check_out_time) <= date(?)"
+        params.append(end_date)
+    if payment_method:
+        query += " AND payment_method = ?"
+        params.append(payment_method)
+
+    query += " ORDER BY check_out_time DESC"
+
+    rows = conn.execute(query, params).fetchall()
     conn.close()
     return rows
